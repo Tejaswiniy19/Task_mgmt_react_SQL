@@ -1,0 +1,17 @@
+import { useEffect, useState } from "react";
+import Navbar from "../components/Navbar";
+import { useAuth } from "../AuthContext";
+import { apiRequest } from "../services";
+import React from "react";
+
+export default function AnalyticsPage() {
+  const { token } = useAuth();
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  useEffect(() => { apiRequest("/analytics", {}, token).then(setData).catch((e) => setError(e.message)); }, [token]);
+  if (error) return <div className="loading-screen">{error}</div>;
+  if (!data) return <div className="loading-screen"><div className="loader"/><p>Building your productivity report...</p></div>;
+  const maxDay = Math.max(1, ...data.daily.map((d) => Number(d.completed)));
+  const maxCategory = Math.max(1, ...data.categories.map((c) => Number(c.count)));
+  return <div className="app-shell"><Navbar/><main className="analytics-page"><div className="page-heading"><span className="eyebrow">PRODUCTIVITY INTELLIGENCE</span><h1>See your momentum.</h1><p>TaskForge turns your completed missions and focus sessions into a transparent progress report.</p></div><div className="analytics-hero"><div><span className="eyebrow">PRODUCTIVITY INDEX</span><strong>{data.completionRate}</strong><span>/100</span><p>Based on completion rate for your current task set.</p></div><div className="level-card"><span>LEVEL</span><strong>{data.level}</strong><small>{data.xp} XP</small></div></div><div className="analytics-grid"><section className="chart-card"><div className="section-heading compact"><div><span className="eyebrow">LAST 7 DAYS</span><h2>Completion rhythm</h2></div></div><div className="bar-chart">{data.daily.length ? data.daily.map((d) => <div className="bar-column" key={d.day}><div className="bar" style={{ height: `${Math.max(8, (Number(d.completed) / maxDay) * 100)}%` }} title={`${d.completed} completed`}/><span>{new Date(d.day).toLocaleDateString([], { weekday: "short" })}</span></div>) : <p className="muted">Complete missions to populate this chart.</p>}</div></section><section className="chart-card"><div className="section-heading compact"><div><span className="eyebrow">WORK MIX</span><h2>Categories</h2></div></div><div className="category-bars">{data.categories.length ? data.categories.map((c) => <div className="category-row" key={c.category}><div><span>{c.category}</span><b>{c.count}</b></div><i><span style={{ width: `${(Number(c.count) / maxCategory) * 100}%` }}/></i></div>) : <p className="muted">No categories yet.</p>}</div></section></div><div className="stats-grid analytics-stats"><article className="stat-card"><span className="stat-label">Focus time</span><strong className="stat-value">{data.focusMinutes}m</strong><span className="stat-description">Deep-work sessions</span></article><article className="stat-card"><span className="stat-label">Completed effort</span><strong className="stat-value">{data.completedMinutes}m</strong><span className="stat-description">Estimated task effort</span></article><article className="stat-card"><span className="stat-label">XP</span><strong className="stat-value">{data.xp}</strong><span className="stat-description">Progress earned</span></article><article className="stat-card"><span className="stat-label">Streak</span><strong className="stat-value">{data.streak}</strong><span className="stat-description">Consecutive activity days</span></article></div></main></div>;
+}
