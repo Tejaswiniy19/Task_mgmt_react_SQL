@@ -1,4 +1,4 @@
-# TaskForge 2.0
+# TaskForge 
 
 A premium intelligent productivity dashboard built with React, Express, MySQL and a Node.js Worker Thread.
 
